@@ -1,0 +1,119 @@
+---
+title: "Course project for Practical Machine Learning"
+author: "Steven"
+date: "Thursday, July 24, 2015"
+output: html_document
+---
+# Executive summary
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
+
+In this report, we will use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. The goal of the report is to predict the manner in which they did the exercise. This is the "classe" variable in the training set.
+
+# About data used in the report
+
+The training data for this project are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this report come from this source: http://groupware.les.inf.puc-rio.br/har.
+
+# Data import
+
+The raw data contains much values that are not applicable to prediction model as "NA" and "#DIV/0!", thus the first step is to clean up columns which are totally NAs (or totally blank) and rows containing "#DIV/0!". These would be converted to NA when importing.
+
+```{r,cache=TRUE}
+# Data import and clean up
+setwd("C:/Users/steven-j.yu/Downloads/Steven's/Studying/Data Science - 08 Prediction and Machine Learning/Course Project")
+set.seed(1000)
+
+# Import and definition of NA values
+pml_training_data_raw <- read.csv(file = "pml-training.csv",na.strings = c("", "NA", "#DIV/0!"),header=TRUE,sep=",",stringsAsFactors = default.stringsAsFactors())
+pml_testing_data_raw  <- read.csv(file = "pml-testing.csv",na.strings = c("", "NA", "#DIV/0!"),header=TRUE,sep=",",stringsAsFactors = default.stringsAsFactors())
+```
+
+# Cleaning data
+
+For columns with NA values only and rows contain NAs we will clean them up so as to enhance the efficiency of modeling.
+
+
+```{r}
+# Drop columns with NA values only and rows contain NAs
+pml_training <- pml_training_data_raw[,colSums(is.na(pml_training_data_raw)) < nrow(pml_training_data_raw)]
+pml_testing  <- pml_testing_data_raw[,colSums(is.na(pml_testing_data_raw)) < nrow(pml_testing_data_raw)]
+
+pml_training <- pml_training[,sapply(pml_training, function(x) !any(is.na(x)))]
+pml_testing  <- pml_testing[,sapply(pml_testing, function(x) !any(is.na(x)))]
+
+pml_training <- pml_training[apply(pml_training, 1, function(x)!any(is.na(x))),-c(1,5,6), drop=F]
+pml_testing  <- pml_testing[apply(pml_testing, 1, function(x)!any(is.na(x))),-c(1,5,6), drop=F]
+```
+
+# Cross Validation
+
+In order to perform cross validation, we would split training data into training and validation two parts (the testing set has been given so we would not split that part solely).
+
+```{r,cache=TRUE}
+# create train and validation sets
+require(caret)
+require(randomForest)
+inTrain <- createDataPartition(y=pml_training$classe,p=0.6, list=FALSE)
+pml_training_inTrain    <- pml_training[inTrain,]
+pml_training_Validation <- pml_training[-inTrain,]
+```
+
+Then we will train the data to fit random forest model and apply it to validation set as cross validation.
+
+```{r,cache=TRUE}
+# Train on training data to setup the model
+rf_fit_model <- train(classe~., 
+                      data=pml_training_inTrain, 
+                      method="rf", 
+                      tuneGrid=data.frame(mtry=3), 
+                      trControl=trainControl(method="none")
+                      )
+```
+
+The model has a quite good fit due to its low out of band error rate (0.14%) as the brief summary on the final model below:
+
+```{r}
+rf_fit_model$finalModel
+```
+
+Then we will compare it with the actual class:
+```{r,cache=TRUE}
+# Application to validation data set
+pml_training_Validation_prediction <- predict(rf_fit_model,pml_training_Validation)
+
+# Compare results
+confusionMatrix(pml_training_Validation$classe,pml_training_Validation_prediction)
+```
+
+The result has 99.46% accuracy which presents a good fit.
+
+# Application to testing dataset
+
+Now we will apply it to testing data set:
+```{r,cache=TRUE}
+# Apply model to test data
+predict_output <- predict(rf_fit_model,pml_testing)
+predict_output
+```
+
+Finally the result would be split into single files through following function and codes:
+
+```{r}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+pml_write_files(predict_output)
+```
