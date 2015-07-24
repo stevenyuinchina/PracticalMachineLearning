@@ -77,7 +77,7 @@ tt, code, pre {
    font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
 }
 
-h1 {
+h2 {
    font-size:2.2em;
 }
 
@@ -201,13 +201,16 @@ hr {
 </head>
 
 <body>
-<h1>Executive summary</h1>
+
+<h1>Course project for Practical Machine Learning</h1>
+
+<h2>Executive summary</h2>
 
 <p>Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. </p>
 
 <p>In this report, we will use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. The goal of the report is to predict the manner in which they did the exercise. This is the &ldquo;classe&rdquo; variable in the training set.</p>
 
-<h1>About data used in the report</h1>
+<h2>About data used in the report</h2>
 
 <p>The training data for this project are available here: </p>
 
@@ -219,7 +222,7 @@ hr {
 
 <p>The data for this report come from this source: <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a>.</p>
 
-<h1>Data import</h1>
+<h2>Data import</h2>
 
 <p>The raw data contains much values that are not applicable to prediction model as &ldquo;NA&rdquo; and &ldquo;#DIV/0!&rdquo;, thus the first step is to clean up columns which are totally NAs (or totally blank) and rows containing &ldquo;#DIV/0!&rdquo;. These would be converted to NA when importing.</p>
 
@@ -232,7 +235,7 @@ pml_training_data_raw &lt;- read.csv(file = &quot;pml-training.csv&quot;,na.stri
 pml_testing_data_raw  &lt;- read.csv(file = &quot;pml-testing.csv&quot;,na.strings = c(&quot;&quot;, &quot;NA&quot;, &quot;#DIV/0!&quot;),header=TRUE,sep=&quot;,&quot;,stringsAsFactors = default.stringsAsFactors())
 </code></pre>
 
-<h1>Cleaning data</h1>
+<h2>Cleaning data</h2>
 
 <p>For columns with NA values only and rows contain NAs we will clean them up so as to enhance the efficiency of modeling.</p>
 
@@ -247,7 +250,7 @@ pml_training &lt;- pml_training[apply(pml_training, 1, function(x)!any(is.na(x))
 pml_testing  &lt;- pml_testing[apply(pml_testing, 1, function(x)!any(is.na(x))),-c(1,5,6), drop=F]
 </code></pre>
 
-<h1>Cross Validation</h1>
+<h2>Cross Validation</h2>
 
 <p>In order to perform cross validation, we would split training data into training and validation two parts (the testing set has been given so we would not split that part solely).</p>
 
@@ -336,7 +339,7 @@ confusionMatrix(pml_training_Validation$classe,pml_training_Validation_predictio
 
 <p>The result has 99.46% accuracy which presents a good fit.</p>
 
-<h1>Application to testing dataset</h1>
+<h2>Application to testing dataset</h2>
 
 <p>Now we will apply it to testing data set:</p>
 
